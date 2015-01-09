@@ -7,8 +7,12 @@ import os
 from OpenGL.GL import *
 from OpenGL.GLU import *
 import pyglet
-import subprocess
-from threading import Thread
+from pygame.mixer import *
+
+init(frequency=22050, size=-16, channels=2, buffer=4096)
+music.load('Awolnation - Sail.mp3')
+music.play()
+
 
 #def play_music():
 #    return subprocess.call('mpg123 "Awolnation - Sail.mp3"', shell=True)
@@ -44,11 +48,13 @@ vy = 00.0
 
 class Obstacle:
 
-	def __init__(self,posarg,lengtharg):
+	def __init__(self,posarg,lengtharg,xory):
 		self.mispos = posarg
 		self.length = lengtharg
-		self.pos = 2.5
-
+		if xory == 'x':
+			self.pos = 2.5
+		else:
+			self.pos = 0
 	def drawx(self):
 		glBegin(GL_QUADS)
     		glColor3f(0.5, 1, 0.5)
@@ -59,7 +65,7 @@ class Obstacle:
     		glEnd()
 	
 	def drawx_matrix(self):
-		print self.pos
+		print self.pos, self.mispos
     		glPushMatrix()
     		glTranslatef(0,0,-10)
     		if self.pos >= 17.5:
@@ -70,7 +76,26 @@ class Obstacle:
     		self.drawx()
     		glPopMatrix()
 
-
+	def drawy(self):
+		glBegin(GL_QUADS)
+		glColor3f(0.5, 1, 0.5) 
+		glVertex3f(0, 0, 0)
+		glVertex3f(0, self.length, 0)
+		glVertex3f(self.length, self.length, 0)
+		glVertex3f(self.length, 0, 0)
+		glEnd()
+	
+	def drawy_matrix(self):
+		print self.pos, self.mispos
+		glPushMatrix()
+		glTranslatef(self.mispos,0,-10)
+		if self.pos >= 20:
+			self.pos = -10
+		else:
+			self.pos += 0.5
+		glTranslatef(0,self.pos,0)
+		self.drawy()
+		glPopMatrix() 
 def mod(x,y):
     if x == y:
         return 0
@@ -116,36 +141,36 @@ def draw_player_matrix():
     draw_player()
     glPopMatrix()
 
-def draw_obstacles():
-    glBegin(GL_QUADS)
-    glColor3f(0.5, 1, 0.5)
-    glVertex3f(2, 0, 0)
-    glVertex3f(2, 2, 0)
-    glVertex3f(0, 2, 0)
-    glVertex3f(0, 0, 0)
-    glEnd()
+#def draw_obstacles():
+#    glBegin(GL_QUADS)
+#    glColor3f(0.5, 1, 0.5)
+#    glVertex3f(2, 0, 0)
+#    glVertex3f(2, 2, 0)
+#   glVertex3f(0, 2, 0)
+#    glVertex3f(0, 0, 0)
+#    glEnd()
 
-def draw_obstacles_matrix():
-    global obsty
-    print t,obsty,boxx,boxy
-    glPushMatrix()
-    glTranslatef(0,0,-10)
-    if obsty >= 20:
-	obsty = -10
-    else:
-    	obsty += 0.5
-    glTranslatef(0,obsty,0)
-    draw_obstacles()
-    glPopMatrix()
+#def draw_obstacles_matrix():
+#    global obsty
+#    print t,obsty,boxx,boxy
+#    glPushMatrix()
+#    glTranslatef(0,0,-10)
+#    if obsty >= 20:
+#	obsty = -10
+#    else:
+#    	obsty += 0.5
+#    glTranslatef(0,obsty,0)
+#    draw_obstacles()
+#    glPopMatrix()
 
 def draw_goal():
     glBegin(GL_TRIANGLES)
     glColor3f(0.5, 0.5, 1)
-    glVertex3f(7.5, 1, 0)
+    glVertex3f(6, 1, 0)
     #glVertex3f(7.5, 2, 0)
     #glVertex3f(9.5, 2, 0)
-    glVertex3f(9.5, 2, 0)
-    glVertex3f(9.5, 0, 0)
+    glVertex3f(8, 2, 0)
+    glVertex3f(8, 0, 0)
     glEnd()
 
 		
@@ -155,65 +180,68 @@ def draw_goal_matrix():
     draw_goal()
     glPopMatrix()
 
-Obstacle2 = Obstacle(2.5,2)
-Obstacle3 = Obstacle(-2.5,2)
-
-
+Obstacle2 = Obstacle(2,2,'x')
+Obstacle3 = Obstacle(-2,2,'x')
+Obstacle4 = Obstacle(4,2,'y')
+Obstacle5 = Obstacle(0,2,'y')
 
 while True:
     t += 1
-    if boxx == 10 and boxy == obsty:
-        print "Looozer: You touched a square of death! YOU DIE!"  
+    if boxx == Obstacle5.mispos+10 and boxy == Obstacle4.pos:
+	print "Looozer: You touched a square of death! YOU DIE!"  
 	sys.exit()
-    elif boxx == 17.5 and boxy == 0.0:
+    elif boxx == 16 and boxy == 0.0:
     	print "Winner: You reached the triangle of life! YOU WIN!" 
    	sys.exit() 
     elif boxx == Obstacle2.pos and boxy == Obstacle2.mispos:
-	print "Loozer: You touched a square of death! YOU DIE!"
+	print "Loozer: You touched a square of death! YOU DIE! (Death :: Obs2)"
 	sys.exit()
     elif boxx == Obstacle3.pos and boxy == Obstacle3.mispos:
-	print "Loozer: You touched a square of death! YOU DIE!"
+	print "Loozer: You touched a square of death! YOU DIE! (Death :: Obs3)"
 	sys.exit()
+    elif boxx == Obstacle4.mispos+10 and boxy == Obstacle4.pos:
+    	print "Loozer: You touched a square of death! YOU DIE! (Death :: Obs4)"
+    	sys.exit()
     for ev in pygame.event.get():
-        if ev.type == pygame.QUIT:
-            sys.exit()
+	if ev.type == pygame.QUIT:
+	    sys.exit()
+	elif ev.type == pygame.KEYDOWN:
+	    if (ev.key == pygame.K_ESCAPE or 
+		ev.key == pygame.K_q):
+		draw_player_matrix()
+	    elif ev.key == pygame.K_LEFT:
+		if boxx<=0:
+		    boxx=0
+		else:                
+		    boxx-=2
+	    elif ev.key == pygame.K_RIGHT:
+		if boxx>=18:
+		    boxx=18
+		else:
+		    boxx+=2
+	    elif ev.key == pygame.K_UP:
+		if boxy>=10:
+		    boxy=10
+		else:                
+		    boxy+=2
+		draw_player_matrix()
 
-        elif ev.type == pygame.KEYDOWN:
-            if (ev.key == pygame.K_ESCAPE or 
-                ev.key == pygame.K_q):
-                draw_player_matrix()
-            elif ev.key == pygame.K_LEFT:
-                if boxx<=0:
-                    boxx=0
-                else:                
-                    boxx-=2.5
-            elif ev.key == pygame.K_RIGHT:
-                if boxx>=17.5:
-                    boxx=17.5
-                else:
-                    boxx+=2.5
-            elif ev.key == pygame.K_UP:
-                if boxy>=10:
-                    boxy=10
-                else:                
-                    boxy+=2.5
-                draw_player_matrix()
-
-            elif ev.key == pygame.K_DOWN:
-                if boxy<=-10:
-                    boxy=-10
-                else:                    
-                    boxy-=2.5
-                draw_player_matrix()        
-    
+	    elif ev.key == pygame.K_DOWN:
+		if boxy<=-10:
+		    boxy=-10
+		else:                    
+		    boxy-=2
+		draw_player_matrix()        
+	    
     update()
     glClearColor(0.0, 0.0, 0.0, 1.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     draw_player_matrix()      
-    draw_obstacles_matrix()
+    Obstacle5.drawy_matrix()
     draw_goal_matrix()
     Obstacle2.drawx_matrix()
     Obstacle3.drawx_matrix()
+    Obstacle4.drawy_matrix()
     pygame.display.flip()    
     time.sleep(0.01)
 
