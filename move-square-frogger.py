@@ -13,6 +13,7 @@ init(frequency=22050, size=-16, channels=2, buffer=4096)
 music.load('Awolnation - Sail.mp3')
 music.play()
 
+print("Hey, this is completely random but I'm just testing if Git works on my brand new Linux machine.")
 
 #def play_music():
 #    return subprocess.call('mpg123 "Awolnation - Sail.mp3"', shell=True)
